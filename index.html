@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Parameterform von Ebenen - Punkte wandern</title>
+  <script src="https://www.geogebra.org/apps/deployggb.js"></script>
+  <style>
+    :root {
+      --ink: #123044;
+      --muted: #667789;
+      --panel: #ffffff;
+      --line: #d7e5ec;
+      --bg: #eef6f8;
+      --blue: #1b9aaa;
+      --teal: #25bcae;
+      --yellow: #f4c95d;
+      --red: #ef6f6c;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--ink);
+      background: linear-gradient(180deg, #f8fcfd 0%, var(--bg) 100%);
+      overflow-x: hidden;
+    }
+
+    header {
+      padding: 10px 18px 9px;
+      background: #0b1f33;
+      color: white;
+      border-bottom: 4px solid var(--yellow);
+    }
+
+    header h1 {
+      margin: 0 0 3px;
+      font-size: clamp(20px, 1.9vw, 30px);
+      letter-spacing: 0;
+    }
+
+    header p {
+      margin: 0;
+      max-width: 980px;
+      color: #cbe9ea;
+      font-size: 13px;
+      line-height: 1.3;
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(330px, 390px);
+      gap: 14px;
+      padding: 14px;
+      height: calc(100vh - 70px);
+      min-height: 640px;
+      max-width: 1500px;
+      margin: 0 auto;
+      overflow: hidden;
+    }
+
+    #ggb-element {
+      width: 100%;
+      height: 100%;
+      min-height: 600px;
+      min-width: 0;
+      background: white;
+      border: 1px solid var(--line);
+      overflow: hidden;
+      position: relative;
+    }
+
+    #ggb-element iframe,
+    #ggb-element applet,
+    #ggb-element > div,
+    #ggb-element article,
+    #ggb-element .applet_container,
+    #ggb-element .applet_scaler,
+    #ggb-element .GeoGebraFrame {
+      width: 100% !important;
+      height: 100% !important;
+      max-width: 100% !important;
+      min-width: 0 !important;
+      display: block;
+    }
+
+    #ggb-element canvas {
+      max-width: 100% !important;
+    }
+
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      min-width: 0;
+      overflow: auto;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+      box-shadow: 0 8px 24px rgba(18, 48, 68, 0.08);
+    }
+
+    .card h2 {
+      margin: 0 0 10px;
+      font-size: 19px;
+    }
+
+    .formula {
+      padding: 13px;
+      background: #fff7df;
+      border: 1px solid #eac55f;
+      font-family: "Consolas", "Courier New", monospace;
+      font-size: 19px;
+      font-weight: 700;
+      text-align: center;
+      line-height: 1.35;
+    }
+
+    .vec {
+      position: relative;
+      display: inline-block;
+      padding: 0 1px;
+    }
+
+    .vec::after {
+      content: "\2192";
+      position: absolute;
+      left: 50%;
+      top: -0.72em;
+      transform: translateX(-50%);
+      font-size: 0.78em;
+      line-height: 1;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 42px 1fr 48px;
+      gap: 10px;
+      align-items: center;
+      margin: 13px 0;
+    }
+
+    label {
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--blue);
+    }
+
+    .value {
+      font-family: "Consolas", "Courier New", monospace;
+      font-weight: 700;
+      text-align: right;
+    }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 7px;
+      padding: 11px 12px;
+      color: white;
+      background: var(--ink);
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button:hover {
+      filter: brightness(1.08);
+    }
+
+    button.secondary {
+      color: var(--ink);
+      background: #e5f3f2;
+    }
+
+    button.warning {
+      color: var(--ink);
+      background: var(--yellow);
+    }
+
+    .step-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 10px;
+    }
+
+    .step-list li {
+      display: grid;
+      grid-template-columns: 28px 1fr;
+      gap: 10px;
+      align-items: start;
+      padding: 10px;
+      background: #f4fafb;
+      border-left: 5px solid var(--blue);
+    }
+
+    .step-list li:nth-child(2) {
+      border-left-color: var(--teal);
+    }
+
+    .step-list li:nth-child(3) {
+      border-left-color: var(--yellow);
+    }
+
+    .badge {
+      width: 28px;
+      height: 28px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: var(--ink);
+      color: white;
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .hint {
+      color: var(--muted);
+      line-height: 1.45;
+      font-size: 14px;
+    }
+
+    .status {
+      min-height: 50px;
+      padding: 12px;
+      background: #0b1f33;
+      color: white;
+      line-height: 1.4;
+      font-weight: 700;
+    }
+
+    .point-callout {
+      display: grid;
+      grid-template-columns: 44px 1fr;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 10px;
+      padding: 12px;
+      background: #fff0ef;
+      border: 1px solid #f4b8b5;
+    }
+
+    .point-dot {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: var(--red);
+      border: 5px solid white;
+      box-shadow: 0 0 0 4px rgba(239, 111, 108, 0.25);
+    }
+
+    .point-callout strong {
+      display: block;
+      margin-bottom: 3px;
+      color: var(--ink);
+    }
+
+    .point-callout span {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.35;
+    }
+
+    .coord-readout {
+      margin-top: 10px;
+      padding: 10px 12px;
+      background: #f7fcff;
+      border: 1px solid var(--line);
+      font-family: "Consolas", "Courier New", monospace;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--ink);
+      text-align: center;
+    }
+
+    @media (max-width: 980px) {
+      header {
+        padding: 10px 14px 9px;
+      }
+
+      header p {
+        font-size: 13px;
+      }
+
+      main {
+        grid-template-columns: 1fr;
+        height: auto;
+        min-height: 0;
+        padding: 12px;
+        gap: 12px;
+      }
+
+      #ggb-element {
+        height: min(58vh, 520px);
+        min-height: 360px;
+      }
+
+      .sidebar {
+        gap: 10px;
+      }
+
+      .card {
+        padding: 13px;
+      }
+    }
+
+    @media (max-width: 520px) {
+      header h1 {
+        font-size: 21px;
+      }
+
+      header p {
+        display: none;
+      }
+
+      main {
+        padding: 8px;
+      }
+
+      #ggb-element {
+        height: 55vh;
+        min-height: 330px;
+      }
+
+      .buttons {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Parameterform von Ebenen entdecken</h1>
+    <p>Der Punkt startet bei P. Mit dem Parameter r wandert er in Richtung u, mit dem Parameter s zusätzlich in Richtung v. So wird sichtbar, wie zwei unabhängige Richtungen eine Ebene aufspannen.</p>
+  </header>
+
+  <main>
+    <section id="ggb-element" aria-label="GeoGebra-Visualisierung einer Ebene in Parameterform"></section>
+
+    <aside class="sidebar">
+      <section class="card">
+        <h2>Bausteine der Ebene</h2>
+        <p class="hint">Der dunkle Pfeil zeigt den Stützvektor vom Ursprung zum Punkt P. Die farbigen Pfeile zeigen die beiden Richtungen, in denen der Punkt weiterwandern kann.</p>
+      </section>
+
+      <section class="card">
+        <h2>Punkt wandern lassen</h2>
+        <div class="row">
+          <label for="rSlider">r</label>
+          <input id="rSlider" type="range" min="-2" max="2" step="0.05" value="1" />
+          <span id="rValue" class="value">1.00</span>
+        </div>
+        <div class="row">
+          <label for="sSlider">s</label>
+          <input id="sSlider" type="range" min="-2" max="2" step="0.05" value="1" />
+          <span id="sValue" class="value">1.00</span>
+        </div>
+        <div id="coordReadout" class="coord-readout"><span class="vec">x</span> = ( - | - | - )</div>
+        <p class="hint">Mit den Koordinaten von X könnt ihr prüfen, ob ein bestimmter Punkt durch passende Werte für r und s auf der Ebene erreicht werden kann.</p>
+        <div class="buttons">
+          <button type="button" onclick="animateR()">nur r wandert</button>
+          <button type="button" onclick="animateS()">nur s wandert</button>
+          <button class="warning" type="button" onclick="animateBoth()">Fläche abfahren</button>
+          <button class="secondary" type="button" onclick="resetView()">zurücksetzen</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Explorationsauftrag</h2>
+        <ol class="step-list">
+          <li><span class="badge">1</span><span>Setzt s = 0 und verändert r. Welche Figur entsteht?</span></li>
+          <li><span class="badge">2</span><span>Setzt r = 0 und verändert s. Was haben beide Figuren gemeinsam?</span></li>
+          <li><span class="badge">3</span><span>Verändert r und s. Was entsteht, wenn beide Parameter beweglich sind?</span></li>
+        </ol>
+      </section>
+
+      <section class="card">
+        <h2>Beobachtung</h2>
+        <div class="point-callout">
+          <div class="point-dot" aria-hidden="true"></div>
+          <div>
+            <strong>Der rote Punkt ist der beschriebene Punkt X.</strong>
+            <span>Er zeigt jeweils das Ergebnis der Rechnung mit den aktuellen Werten von r und s.</span>
+          </div>
+        </div>
+        <p class="hint">Die gelbe Fläche zeigt den aktuell aufgespannten Weg bis zum Punkt X. Die transparente blaue Fläche zeigt die vollständige Ebene.</p>
+      </section>
+    </aside>
+  </main>
+
+  <script>
+    let ggbReady = false;
+    let animation = null;
+    let resizeObserver = null;
+
+    const params = {
+      appName: "3d",
+      width: 900,
+      height: 600,
+      perspective: "T",
+      showToolBar: false,
+      showAlgebraView: false,
+      showAlgebraInput: false,
+      showMenuBar: false,
+      showResetIcon: false,
+      enableLabelDrags: false,
+      enableShiftDragZoom: true,
+      useBrowserForJS: false,
+      appletOnLoad(api) {
+        window.ggbApplet = api;
+        force3DOnlyView();
+        buildConstruction();
+        force3DOnlyView();
+        ggbReady = true;
+        window.updateFromGgb = (objectName) => {
+          if (["X", "P", "A", "B", "r", "s"].includes(objectName)) {
+            refreshPointCoordinates();
+          }
+        };
+        if (typeof api.registerUpdateListener === "function") {
+          api.registerUpdateListener("updateFromGgb");
+        }
+        setParameters(1, 1);
+      }
+    };
+
+    window.addEventListener("load", () => {
+      fitAppletToContainer();
+      const applet = new GGBApplet(params, true);
+      applet.inject("ggb-element");
+      watchAppletSize();
+      setTimeout(resizeAppletToContainer, 300);
+      setTimeout(resizeAppletToContainer, 1200);
+      setTimeout(resizeAppletToContainer, 2500);
+    });
+
+    function fitAppletToContainer() {
+      const host = document.getElementById("ggb-element");
+      const rect = host.getBoundingClientRect();
+      params.width = Math.max(320, Math.round(rect.width));
+      params.height = Math.max(360, Math.round(rect.height));
+    }
+
+    function watchAppletSize() {
+      const host = document.getElementById("ggb-element");
+      if (typeof ResizeObserver !== "function") return;
+      resizeObserver = new ResizeObserver(() => {
+        resizeAppletToContainer();
+      });
+      resizeObserver.observe(host);
+    }
+
+    function resizeAppletToContainer() {
+      const host = document.getElementById("ggb-element");
+      const rect = host.getBoundingClientRect();
+      const width = Math.max(320, Math.round(rect.width));
+      const height = Math.max(330, Math.round(rect.height));
+      host.querySelectorAll("iframe, applet, article, .applet_container, .applet_scaler, .GeoGebraFrame, #applet_container").forEach((node) => {
+        node.style.width = `${width}px`;
+        node.style.height = `${height}px`;
+        node.style.maxWidth = "100%";
+        node.setAttribute("width", String(width));
+        node.setAttribute("height", String(height));
+      });
+      if (window.ggbApplet && typeof window.ggbApplet.setSize === "function") {
+        window.ggbApplet.setSize(width, height);
+      }
+      force3DOnlyView();
+    }
+
+    function cmd(command) {
+      try {
+        window.ggbApplet.evalCommand(command);
+      } catch (error) {
+        console.warn("GeoGebra command skipped:", command, error);
+      }
+    }
+
+    function force3DOnlyView() {
+      try {
+        if (typeof window.ggbApplet.setPerspective === "function") {
+          window.ggbApplet.setPerspective("T");
+        }
+      } catch (error) {
+        try {
+          cmd("SetPerspective(\"T\")");
+        } catch (ignored) {
+        }
+      }
+    }
+
+    function style(objectName, color, alpha, thickness) {
+      try {
+        window.ggbApplet.setColor(objectName, color[0], color[1], color[2]);
+        if (typeof alpha === "number") window.ggbApplet.setFilling(objectName, alpha);
+        if (typeof thickness === "number") window.ggbApplet.setLineThickness(objectName, thickness);
+      } catch (error) {
+        console.warn("GeoGebra style skipped:", objectName, error);
+      }
+    }
+
+    function setObjectVisible(objectName, visible) {
+      try {
+        window.ggbApplet.setVisible(objectName, visible);
+      } catch (error) {
+        try {
+          cmd(`SetVisibleInView(${objectName}, -1, ${visible})`);
+        } catch (ignored) {
+        }
+      }
+    }
+
+    function hideDefaultPlane() {
+      try {
+        window.ggbApplet.setVisible("xOyPlane", false);
+      } catch (error) {
+        try {
+          cmd("SetVisibleInView(xOyPlane, -1, false)");
+        } catch (ignored) {
+          // GeoGebra versions differ in how the default xOy plane is exposed.
+        }
+      }
+    }
+
+    function buildConstruction() {
+      cmd("O = (0, 0, 0)");
+      cmd("P = (2, 1, 3)");
+      cmd("A = (3, 3, 3)");
+      cmd("B = (5, 2, 3)");
+      cmd("r = 1");
+      cmd("s = 1");
+      cmd("stuetz = Vector(O, P)");
+      cmd("u = Vector(P, A)");
+      cmd("v = Vector(P, B)");
+      cmd("U_r = P + r * u");
+      cmd("V_s = P + s * v");
+      cmd("X = P + r * u + s * v");
+      cmd("markierung_X = Sphere(X, 0.06)");
+      cmd("weg_u = Segment(P, U_r)");
+      cmd("hilfe_v = Segment(P, V_s)");
+      cmd("parallelogramm = Polygon(P, U_r, X, V_s)");
+      cmd("E = Plane(P, A, B)");
+      cmd("g_u = Line(P, A)");
+      cmd("g_v = Line(P, B)");
+      cmd("SetFixed(O, true)");
+      cmd("SetPointStyle(O, 9)");
+      cmd("SetPointStyle(P, 9)");
+      cmd("SetPointStyle(A, 9)");
+      cmd("SetPointStyle(B, 9)");
+      cmd("SetPointStyle(U_r, 4)");
+      cmd("SetPointStyle(V_s, 4)");
+      cmd("SetPointStyle(X, 7)");
+      cmd("SetCaption(O, \"O\")");
+      cmd("SetCaption(P, \"P\")");
+      cmd("SetCaption(A, \"A: bestimmt u\")");
+      cmd("SetCaption(B, \"B: bestimmt v\")");
+      cmd("SetCaption(X, \"beschriebener Punkt X\")");
+      cmd("ShowLabel(O, false)");
+      cmd("ShowLabel(P, false)");
+      cmd("ShowLabel(A, false)");
+      cmd("ShowLabel(B, false)");
+      cmd("ShowLabel(X, true)");
+      cmd("ShowLabel(stuetz, false)");
+      cmd("ShowLabel(u, false)");
+      cmd("ShowLabel(v, false)");
+      cmd("ShowLabel(E, false)");
+      cmd("ShowLabel(g_u, false)");
+      cmd("ShowLabel(g_v, false)");
+      style("stuetz", [18, 48, 68], 0, 7);
+      style("u", [27, 154, 170], 0, 8);
+      style("v", [244, 201, 93], 0, 8);
+      style("weg_u", [27, 154, 170], 0, 8);
+      style("hilfe_v", [244, 201, 93], 0, 4);
+      style("parallelogramm", [244, 201, 93], 0.32, 2);
+      style("E", [27, 154, 170], 0.14, 1);
+      style("markierung_X", [239, 111, 108], 0.18, 1);
+      style("g_u", [27, 154, 170], 0, 2);
+      style("g_v", [244, 201, 93], 0, 2);
+      style("O", [18, 48, 68], null, null);
+      style("P", [18, 48, 68], null, null);
+      style("A", [27, 154, 170], null, null);
+      style("B", [244, 201, 93], null, null);
+      style("X", [239, 111, 108], null, null);
+      cmd("SetPointSize(X, 6)");
+      cmd("SetCoordSystem(0, 7, -1, 6, 1, 5)");
+      cmd("SetAxesRatio(1, 1, 1)");
+      cmd("SetViewDirection((5, -7, 4))");
+      hideDefaultPlane();
+      force3DOnlyView();
+    }
+
+    function setParameters(r, s) {
+      if (!ggbReady) return;
+      window.ggbApplet.setValue("r", r);
+      window.ggbApplet.setValue("s", s);
+      document.getElementById("rSlider").value = r;
+      document.getElementById("sSlider").value = s;
+      updateLabels(r, s);
+    }
+
+    function updateLabels(r, s) {
+      const rf = Number(r).toFixed(2);
+      const sf = Number(s).toFixed(2);
+      document.getElementById("rValue").textContent = rf;
+      document.getElementById("sValue").textContent = sf;
+      refreshPointCoordinates();
+    }
+
+    function refreshPointCoordinates() {
+      if (!ggbReady || !window.ggbApplet) return;
+      try {
+        const x = window.ggbApplet.getXcoord("X");
+        const y = window.ggbApplet.getYcoord("X");
+        const z = window.ggbApplet.getZcoord("X");
+        document.getElementById("coordReadout").innerHTML =
+          `<span class="vec">x</span> = (${Number(x).toFixed(2)} | ${Number(y).toFixed(2)} | ${Number(z).toFixed(2)})`;
+      } catch (error) {
+        document.getElementById("coordReadout").innerHTML = '<span class="vec">x</span> = ( - | - | - )';
+      }
+    }
+
+    function stopAnimation() {
+      if (animation) {
+        clearInterval(animation);
+        animation = null;
+      }
+    }
+
+    function animateR() {
+      stopAnimation();
+      let t = -2;
+      setParameters(t, 0);
+      animation = setInterval(() => {
+        t += 0.05;
+        if (t > 2.001) stopAnimation();
+        setParameters(Math.min(t, 2), 0);
+      }, 35);
+    }
+
+    function animateS() {
+      stopAnimation();
+      let t = -2;
+      const r = Number(document.getElementById("rSlider").value);
+      animation = setInterval(() => {
+        t += 0.05;
+        if (t > 2.001) stopAnimation();
+        setParameters(r, Math.min(t, 2));
+      }, 35);
+    }
+
+    function animateBoth() {
+      stopAnimation();
+      let r = -2;
+      let s = -2;
+      animation = setInterval(() => {
+        setParameters(r, s);
+        s += 0.12;
+        if (s > 2) {
+          s = -2;
+          r += 0.25;
+        }
+        if (r > 2.001) stopAnimation();
+      }, 55);
+    }
+
+    function resetView() {
+      stopAnimation();
+      setParameters(1, 1);
+      if (ggbReady) {
+        cmd("P = (2, 1, 3)");
+        cmd("A = (3, 3, 3)");
+        cmd("B = (5, 2, 3)");
+        cmd("SetCoordSystem(0, 7, -1, 6, 1, 5)");
+        cmd("SetAxesRatio(1, 1, 1)");
+        cmd("SetViewDirection((5, -7, 4))");
+        hideDefaultPlane();
+        force3DOnlyView();
+      }
+    }
+
+    document.getElementById("rSlider").addEventListener("input", (event) => {
+      stopAnimation();
+      const r = Number(event.target.value);
+      const s = Number(document.getElementById("sSlider").value);
+      setParameters(r, s);
+    });
+
+    document.getElementById("sSlider").addEventListener("input", (event) => {
+      stopAnimation();
+      const r = Number(document.getElementById("rSlider").value);
+      const s = Number(event.target.value);
+      setParameters(r, s);
+    });
+  </script>
+</body>
+</html>
